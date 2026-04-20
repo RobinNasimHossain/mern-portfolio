@@ -28,6 +28,29 @@ export async function requireAuth(req, _res, next) {
   }
 }
 
+// Populates req.user if a valid access token is present, but never rejects.
+// Use on public routes that vary their response based on admin status.
+export async function optionalAuth(req, _res, next) {
+  const token = extractToken(req);
+  if (!token) return next();
+  try {
+    const payload = verifyAccessToken(token);
+    if (payload.type !== 'access') return next();
+    const user = await User.findById(payload.sub).lean();
+    if (user) {
+      req.user = {
+        id: user._id.toString(),
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      };
+    }
+  } catch {
+    // Invalid/expired token on a public route — treat as anonymous.
+  }
+  next();
+}
+
 export function requireRole(...roles) {
   return (req, _res, next) => {
     if (!req.user) return next(new HttpError(401, 'Authentication required'));

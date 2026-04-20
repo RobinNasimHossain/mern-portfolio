@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { Post } from '../models/Post.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { HttpError } from '../utils/httpError.js';
-import { requireAuth, requireAdmin } from '../middleware/auth.js';
+import { requireAuth, requireAdmin, optionalAuth } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 
 const router = Router();
@@ -21,10 +21,13 @@ const postBody = z.object({
 
 router.get(
   '/',
+  optionalAuth,
   asyncHandler(async (req, res) => {
     const { tag, includeDrafts } = req.query;
+    const isAdmin = req.user?.role === 'admin';
     const filter = {};
-    if (includeDrafts !== 'true') filter.published = true;
+    // Drafts are only ever returned to authenticated admins.
+    if (!(isAdmin && includeDrafts === 'true')) filter.published = true;
     if (tag) filter.tags = tag;
     const items = await Post.find(filter)
       .sort({ publishedAt: -1, createdAt: -1 })
@@ -35,8 +38,12 @@ router.get(
 
 router.get(
   '/:slug',
+  optionalAuth,
   asyncHandler(async (req, res) => {
-    const post = await Post.findOne({ slug: req.params.slug }).populate('author', 'name');
+    const isAdmin = req.user?.role === 'admin';
+    const query = { slug: req.params.slug };
+    if (!isAdmin) query.published = true;
+    const post = await Post.findOne(query).populate('author', 'name');
     if (!post) throw new HttpError(404, 'Post not found');
     res.json({ post });
   }),
