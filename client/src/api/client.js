@@ -64,12 +64,19 @@ async function refreshAccessToken() {
   return refreshInFlight;
 }
 
+// Endpoints that must never trigger a refresh-retry, to avoid infinite loops.
+// /auth/me, /auth/logout, and /auth/change-password are intentionally NOT here:
+// a 401 on those should still perform a silent refresh so the user stays
+// logged in across access-token expiry.
+const NO_RETRY_URL_RE = /\/auth\/(login|register|refresh)(\b|\/|$)/;
+
 api.interceptors.response.use(
   (r) => r,
   async (error) => {
     const original = error.config;
     const status = error.response?.status;
-    if (status === 401 && !original._retry && refreshToken && !original.url?.includes('/auth/')) {
+    const url = original?.url || '';
+    if (status === 401 && !original._retry && refreshToken && !NO_RETRY_URL_RE.test(url)) {
       original._retry = true;
       try {
         const newToken = await refreshAccessToken();
