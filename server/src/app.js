@@ -17,9 +17,19 @@ export function createApp() {
   app.disable('x-powered-by');
   app.set('trust proxy', 1);
   app.use(helmet());
+  const allowedOrigins = config.clientOrigin
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
   app.use(
     cors({
-      origin: config.clientOrigin,
+      origin(origin, cb) {
+        if (!origin) return cb(null, true);
+        if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+          return cb(null, true);
+        }
+        return cb(new Error(`Origin ${origin} not allowed by CORS`));
+      },
       credentials: true,
     }),
   );
