@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.robinnasim.portfolio",
+      "sha256_cert_fingerprints": [
+        "F3:20:79:5A:68:AE:28:3B:C0:4E:74:74:9F:03:E7:B2:FC:4C:BA:BE:05:99:7A:76:DE:91:BD:89:B8:B4:6F:00"
+      ]
+    }
+  }
+]
