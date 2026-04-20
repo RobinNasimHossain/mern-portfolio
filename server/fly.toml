@@ -1,0 +1,27 @@
+app = "robin-mern-portfolio-api"
+primary_region = "iad"
+
+[build]
+
+[http_service]
+  internal_port = 4000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.concurrency]
+    type = "requests"
+    hard_limit = 200
+    soft_limit = 150
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 512
+
+[env]
+  NODE_ENV = "production"
+  PORT = "4000"
+  JWT_ACCESS_TTL = "15m"
+  JWT_REFRESH_TTL = "7d"
